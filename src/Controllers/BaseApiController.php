@@ -6,6 +6,8 @@ use Argha\NetutilxApi\Helpers\Response;
 use Argha\NetutilxApi\Controllers\APIKeyController;
 
 class BaseAPIController {
+
+    // fixed the error in the code
     protected $userId = null;
 
     public function __construct() {
