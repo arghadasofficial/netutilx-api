@@ -5,6 +5,7 @@ namespace Argha\NetutilxApi\Controllers;
 use Argha\NetutilxApi\Config\Database;
 use Argha\NetutilxApi\Helpers\Response;
 use Exception;
+use Argha\NetutilxApi\Controllers\BaseAPIController;
 
 class DnsxController extends BaseAPIController
 {
