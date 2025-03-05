@@ -25,6 +25,17 @@ switch ($action) {
             $response = $dnsxController->getRequestHistory();
         }
         break;
+    case 'query':
+        $query = $_GET['query'] ?? null;
+        $type = $_GET['type'] ?? null;
+        $server = $_GET['server'] ?? null;
+        
+        if ($query && $type && $server) {
+            $response = $dnsxController->queryDns($query, $server, $type);
+        } else {
+            $response = Response::sendError("Empty parameter values");
+        }
+        break;
     default:
         $response = Response::sendError("Invalid parameter");
         break;
