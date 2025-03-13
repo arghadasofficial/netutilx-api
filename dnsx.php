@@ -12,18 +12,13 @@ $action = $_GET['action'] ?? null;
 
 switch ($action) {
     case 'types':
-        $response = $dnsxController->getDnsTypes();
+        $response = $dnsxController->getDnsParameters('dns_type');
         break;
-    case 'servers':
-        $response = $dnsxController->getDnsServers();
+    case 'dns_provider':
+        $response = $dnsxController->getDnsParameters('dns_provider');
         break;
     case 'history':
-        $requestId = $_GET['request_id'] ?? null;
-        if ($requestId) {
-            $response = $dnsxController->getDetailedHistory($requestId);
-        } else {
-            $response = $dnsxController->getRequestHistory();
-        }
+        $response = $dnsxController->getHistory();
         break;
     case 'query':
         $query = $_GET['query'] ?? null;
@@ -40,6 +35,8 @@ switch ($action) {
         $response = Response::sendError("Invalid parameter");
         break;
 }
+
+
 
 echo json_encode($response);
 exit;

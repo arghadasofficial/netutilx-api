@@ -2,6 +2,10 @@
 namespace Argha\NetutilxApi\Helpers;
 class Response
 {
+    public static function getSuccess($message, $data = []) {
+        return self::sendSuccess($message, $data);
+    }
+
     public static function sendSuccess($message, $data = [])
     {
         return [
