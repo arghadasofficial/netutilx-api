@@ -38,4 +38,5 @@ For queries, feel free to reach out:
   <br><br>
   🔗 **Also check out:**  
   🔹 [Netutilx Service](https://github.com/arghadasofficial/netutilx-service) – The core service handling network commands  
+  🔹 [Netutilx Android](https://github.com/arghadasofficial/netutilx-android) – The official **Android App**  
 </p>
