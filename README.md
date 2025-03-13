@@ -9,7 +9,8 @@ Netutilx API serves as the backbone of the **Netutilx Project**, facilitating se
 - Integral to the **Netutilx Project** ecosystem.
 
 ## License
-This project is licensed under the **MIT License**.
+This project is licensed under the **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0) License**. Commercial use is strictly prohibited.
 
 ## Contact
 For queries, reach out via [email@example.com](mailto:arghadasofficial@gmail.com).
+
