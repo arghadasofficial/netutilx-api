@@ -10,6 +10,7 @@ class Constants
     public static $APP_ENV;
     public static $APP_DEBUG;
     public static $APP_URL;
+    public static $SERVICE_URL;
 
     // A flag to ensure that the environment is loaded only once
     private static $initialized = false;
@@ -30,10 +31,11 @@ class Constants
         $dotenv->load();
 
         // Set the constants from the environment variables.
-        self::$APP_NAME     = $_ENV['APP_NAME']     ?? null;
-        self::$APP_ENV      = $_ENV['APP_ENV']      ?? null;
-        self::$APP_DEBUG    = $_ENV['APP_DEBUG']    ?? null;
-        self::$APP_URL      = $_ENV['APP_URL']      ?? null;
+        self::$APP_NAME = $_ENV['APP_NAME'] ?? null;
+        self::$APP_ENV = $_ENV['APP_ENV'] ?? null;
+        self::$APP_DEBUG = $_ENV['APP_DEBUG'] ?? null;
+        self::$APP_URL = $_ENV['APP_URL'] ?? null;
+        self::$SERVICE_URL = $_ENV['SERVICE_URL'] ?? null;
 
         self::$initialized = true;
     }

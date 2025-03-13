@@ -7,20 +7,28 @@ use GuzzleHttp\Exception\RequestException;
 
 class ServiceHelper
 {
-    private static array $servicesUrl = [
-        'base_url' => 'https://netutilx.grow10x.business/service/',
-        'dnsx' => 'dnsx/dnsx.php',
-    ];
+    private $serviceUrl;
+    private array $servicesUrl;
 
-    public static function getUrl(string $key)
-    {
-        return self::$servicesUrl[$key] ?? null;
+    public function __construct($serviceUrl) {
+        $this->serviceUrl = $serviceUrl;
+        // Initialize the servicesUrl array with the base URL and other endpoints.
+        $this->servicesUrl = [
+            'base_url' => $this->serviceUrl,
+            'dnsx'     => 'dnsx/dnsx.php',
+        ];
     }
 
-    public static function sendGetRequest(string $service, array $params = []): array
+    public function getUrl(string $key)
     {
-        $base_url = self::getUrl('base_url');
-        $endpoint = $base_url . self::getUrl($service);
+        return $this->servicesUrl[$key] ?? null;
+    }
+
+    public function sendGetRequest(string $service, array $params = []): array
+    {
+        $base_url = $this->getUrl('base_url');
+        $serviceUrl = $this->getUrl($service);
+        $endpoint = $base_url . $serviceUrl;
 
         if (!$base_url || !$endpoint) {
             return [

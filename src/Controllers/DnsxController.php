@@ -15,7 +15,7 @@ class DnsxController extends BaseApiController
 {
     private $dnsHelper;
     private $toolsParamHelper;
-
+    private $serviceHelper;
     private $toolHistoryHelper;
 
     public function __construct()
@@ -25,6 +25,7 @@ class DnsxController extends BaseApiController
         $this->dnsHelper = new DnsHelper();
         $this->toolsParamHelper = new ToolParamHelper();
         $this->toolHistoryHelper = new ToolHistoryHelper();
+        $this->serviceHelper = new ServiceHelper(Constants::$SERVICE_URL);
     }
 
     public function queryDns($query, $server, $type)
@@ -60,7 +61,7 @@ class DnsxController extends BaseApiController
         }
 
         // Send request
-        $response = ServiceHelper::sendGetRequest('dnsx', $params);
+        $response = $this->serviceHelper->sendGetRequest('dnsx', $params);
 
         // Ensure consistent success/failure response
         if ($response['success'] && isset($response['decoded_response'])) {
