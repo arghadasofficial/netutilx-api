@@ -75,7 +75,8 @@ class DnsxController extends BaseApiController
                 json_encode($response['decoded_response']),
                 $response['status_code']
             );
-            return $response['decoded_response'];
+
+            return ["success" => true, "data" => $this->dnsHelper->parseDnsRecord($response['decoded_response']['data']['output'])];
         }
 
         return $response['response'] ?? null;

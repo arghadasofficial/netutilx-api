@@ -15,7 +15,9 @@ class ServiceHelper
         // Initialize the servicesUrl array with the base URL and other endpoints.
         $this->servicesUrl = [
             'base_url' => $this->serviceUrl,
-            'dnsx'     => 'dnsx/dnsx.php',
+            'dnsx' => 'dnsx/dnsx.php',
+            'pingx' => 'pingx/pingx.php',
+            'tracex' => 'tracex/tracex.php',
         ];
     }
 
