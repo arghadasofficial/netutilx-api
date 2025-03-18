@@ -19,7 +19,7 @@ class ToolHistoryHelper
     public function getHistory($user_id, $tool_source)
     {
         try {
-            $stmt = $this->connection->prepare("SELECT * FROM `tool_history` WHERE user_id = ? AND log_source = ?");
+            $stmt = $this->connection->prepare("SELECT * FROM `tool_history` WHERE user_id = ? AND log_source = ? ORDER BY created_at DESC");
             $stmt->bind_param("is", $user_id, $tool_source);
             $stmt->execute();
             $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);

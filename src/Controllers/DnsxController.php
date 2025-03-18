@@ -72,7 +72,7 @@ class DnsxController extends BaseApiController
                 'dnsx',
                 Constants::$APP_URL,
                 "/dnsx.php?query=$query&type=$type&server=$server&action=query",
-                json_encode($response['decoded_response']),
+                json_encode($this->dnsHelper->parseDnsRecord($response['decoded_response']['data']['output'])),
                 $response['status_code']
             );
 

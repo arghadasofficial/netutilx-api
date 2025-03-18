@@ -18,6 +18,7 @@ class ServiceHelper
             'dnsx' => 'dnsx/dnsx.php',
             'pingx' => 'pingx/pingx.php',
             'tracex' => 'tracex/tracex.php',
+            'updownx' => 'updownx/updownx.php',
         ];
     }
 
