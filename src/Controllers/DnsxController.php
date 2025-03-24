@@ -35,7 +35,7 @@ class DnsxController extends BaseApiController
         }
 
         if($isQuery === "ip") {
-            $response = $this->dnsHelper->parsePtrRecord($this->dnsHelper->ptrQuery($query));
+            $response = $this->dnsHelper->ptrQuery($query);
             return $response;
         }
         return [];
