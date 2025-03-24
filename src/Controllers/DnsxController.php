@@ -28,7 +28,20 @@ class DnsxController extends BaseApiController
         $this->serviceHelper = new ServiceHelper(Constants::$SERVICE_URL);
     }
 
-    public function queryDns($query, $server, $type)
+    public function queryDns($query, $server, $type) {
+        $isQuery = $this->dnsHelper->isDomainOrIp($query);
+        if($isQuery === "unknown") {
+            return Response::sendError("Invalid Query");
+        }
+
+        if($isQuery === "ip") {
+            $response = $this->dnsHelper->parsePtrRecord($this->dnsHelper->ptrQuery($query));
+            return $response;
+        }
+        return [];
+    }
+
+    public function queryDnsOld($query, $server, $type)
     {
         $isDomainOrIp = $this->dnsHelper->isDomainOrIp($query);
 
