@@ -1,0 +1,23 @@
+{
+    "name": "argha/netutilx-api",
+    "description": "Backend API for NetUtilX powering all platform requests and network utility processing.",
+    "type": "project",
+    "require": {
+        "vlucas/phpdotenv": "^5.6",
+        "symfony/http-foundation": "^7.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "Core\\": "core/",
+            "Services\\": "services/",
+            "Utils\\": "utils/",
+            "Config\\": "config/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Argha Das",
+            "email": "developer.arghadas@gmail.com"
+        }
+    ]
+}
