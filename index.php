@@ -4,19 +4,45 @@ require_once __DIR__ . '/vendor/autoload.php';
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 
-try {
-    // Test dig command on google.com for A record
-    $process = new Process(['dig', 'google.com', 'A', '+noall', '+answer']);
-    $process->run();
+class ProcessDnsTester
+{
+    private function executeQuery(array $command)
+    {
+        $process = new Process(array_merge(['timeout', '2'], $command));
+        $process->run();
 
-    // Check if dig was successful
-    if (!$process->isSuccessful()) {
-        throw new ProcessFailedException($process);
+        if (!$process->isSuccessful()) {
+            return [
+                "success" => false,
+                "query"   => implode(' ', $command),
+                "output"  => $process->getErrorOutput() ?: "Command execution failed or timed out."
+            ];
+        }
+
+        $trimmedOutput = trim($process->getOutput());
+
+        return [
+            "success" => !empty($trimmedOutput) && !str_contains($trimmedOutput, "SERVFAIL"),
+            "query"   => implode(' ', $command),
+            "output"  => $trimmedOutput ?: "No response received."
+        ];
     }
 
-    echo "✅ 'dig' executed successfully.\n";
-    echo "Output:\n" . $process->getOutput();
-} catch (\Throwable $e) {
-    echo "❌ Process or 'dig' failed.\n";
-    echo "Error: " . $e->getMessage();
+    public function aQuery($domain, $server)
+    {
+        return $this->executeQuery(['dig', "@$server", 'A', $domain, '+noall', '+answer']);
+    }
+
+    public function nsQuery($domain, $server)
+    {
+        return $this->executeQuery(['dig', "@$server", 'NS', $domain, '+noall', '+answer']);
+    }
 }
+
+// Run test
+$tester = new ProcessDnsTester();
+header('Content-Type: application/json');
+echo json_encode([
+    'a'  => $tester->aQuery('google.com', '8.8.8.8'),
+    'ns' => $tester->nsQuery('google.com', '8.8.8.8')
+], JSON_PRETTY_PRINT);
