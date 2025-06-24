@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/vendor/autoload.php';
 
+use Core\ProcessRunner;
 use Utils\ResponseHelper;
 use Config\Database;
 use Core\DnsExecutor;
@@ -13,7 +14,9 @@ $db = $database->connect();
 
 $dnsServerService = new DnsServerService($db);
 $dnsTypeService = new DnsTypeService($db);
-$dnsExecutor = new DnsExecutor();
+
+$processRunner = new ProcessRunner();
+$dnsExecutor = new DnsExecutor($processRunner);
 
 $dnsInfoService = new DnsInfoService($dnsServerService, $dnsTypeService, $dnsExecutor);
 
@@ -31,7 +34,7 @@ if (!$query || $serverId === null || $typeId === null) {
 $result = $dnsInfoService->queryDnsInfo($query, $serverId, $typeId);
 
 if ($result['success']) {
-    ResponseHelper::success($result, 'Dns Info Fetched Successfully');
+    ResponseHelper::success($result['records'], 'Dns Info Fetched Successfully');
 } else {
     ResponseHelper::error(
         $result['output'],

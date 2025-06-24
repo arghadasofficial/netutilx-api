@@ -2,51 +2,14 @@
 
 namespace Core;
 
-use Symfony\Component\Process\Exception\ProcessTimedOutException;
-use Symfony\Component\Process\Process;
-
 class DnsExecutor
 {
+    private ProcessRunner $processRunner;
 
-    private function run(array $command): array
+    public function __construct(ProcessRunner $processRunner)
     {
-        try {
-            $process = new Process($command);
-            $process->setTimeout(2);
-            $process->run();
-
-            if (!$process->isSuccessful()) {
-                return [
-                    'success' => false,
-                    'query'   => implode(' ', $command),
-                    'output'  => $process->getErrorOutput() ?: 'Command failed with no error output.'
-                ];
-            }
-
-            $output = trim($process->getOutput());
-            $isSuccess = !empty($output) && !str_contains($output, 'SERVFAIL');
-
-            return [
-                'success' => $isSuccess,
-                'query'   => implode(' ', $command),
-                'output'  => $isSuccess ? $output : ($output ?: 'No response received.')
-            ];
-        } catch (ProcessTimedOutException $e) {
-            return [
-                'success' => false,
-                'query'   => implode(' ', $command),
-                'output'  => 'Error: The command timed out after 2 seconds.'
-            ];
-        } catch (\Throwable $e) {
-            return [
-                'success' => false,
-                'query'   => implode(' ', $command),
-                'output'  => 'Exception: ' . $e->getMessage()
-            ];
-        }
+        $this->processRunner = $processRunner;
     }
-
-    // --- Private Parsing Helpers ---
 
     private function parseSimpleRecord(string $rawOutput, string $dataKey = 'target'): array
     {
@@ -88,7 +51,7 @@ class DnsExecutor
         }
         return $records;
     }
-    
+
     private function parseSoaRecord(string $rawOutput): array
     {
         $records = [];
@@ -114,7 +77,7 @@ class DnsExecutor
         }
         return $records;
     }
-    
+
     private function parseTxtRecord(string $rawOutput): array
     {
         $records = [];
@@ -134,65 +97,75 @@ class DnsExecutor
         }
         return $records;
     }
-    
-    // The parsePtrOutput is just an alias for the simple parser
-    private function parsePtrOutput(string $rawOutput): array
-    {
-        return $this->parseSimpleRecord($rawOutput, 'target');
-    }
-
-    // --- Public Query Methods (All now use their respective parsers) ---
 
     public function aQuery(string $domain, string $server): array
     {
-        $rawResult = $this->run(['dig', "@$server", 'A', $domain, '+noall', '+answer']);
-        if ($rawResult['success']) {
+        $command = ['dig', "@$server", 'A', $domain, '+noall', '+answer'];
+        $rawResult = $this->processRunner->execute($command);
+        if ($rawResult['success'] && !str_contains($rawResult['output'], 'SERVFAIL')) {
             $rawResult['records'] = $this->parseSimpleRecord($rawResult['output'], 'address');
+        } else {
+            $rawResult['success'] = false;
         }
         return $rawResult;
     }
 
     public function nsQuery(string $domain, string $server): array
     {
-        $rawResult = $this->run(['dig', "@$server", 'NS', $domain, '+noall', '+answer']);
-        if ($rawResult['success']) {
+        $command = ['dig', "@$server", 'NS', $domain, '+noall', '+answer'];
+        $rawResult = $this->processRunner->execute($command);
+        if ($rawResult['success'] && !str_contains($rawResult['output'], 'SERVFAIL')) {
             $rawResult['records'] = $this->parseSimpleRecord($rawResult['output'], 'target');
+        } else {
+            $rawResult['success'] = false;
         }
         return $rawResult;
     }
 
     public function mxQuery(string $domain, string $server): array
     {
-        $rawResult = $this->run(['dig', "@$server", 'MX', $domain, '+noall', '+answer']);
-        if ($rawResult['success']) {
+        $command = ['dig', "@$server", 'MX', $domain, '+noall', '+answer'];
+        $rawResult = $this->processRunner->execute($command);
+        if ($rawResult['success'] && !str_contains($rawResult['output'], 'SERVFAIL')) {
             $rawResult['records'] = $this->parseMxRecord($rawResult['output']);
+        } else {
+            $rawResult['success'] = false;
         }
         return $rawResult;
     }
 
     public function soaQuery(string $domain, string $server): array
     {
-        $rawResult = $this->run(['dig', "@$server", 'SOA', $domain, '+noall', '+answer']);
-        if ($rawResult['success']) {
+        $command = ['dig', "@$server", 'SOA', $domain, '+noall', '+answer'];
+        $rawResult = $this->processRunner->execute($command);
+        if ($rawResult['success'] && !str_contains($rawResult['output'], 'SERVFAIL')) {
             $rawResult['records'] = $this->parseSoaRecord($rawResult['output']);
+        } else {
+            $rawResult['success'] = false;
         }
         return $rawResult;
     }
 
     public function txtQuery(string $domain, string $server): array
     {
-        $rawResult = $this->run(['dig', "@$server", 'TXT', $domain, '+noall', '+answer']);
-        if ($rawResult['success']) {
+        $command = ['dig', "@$server", 'TXT', $domain, '+noall', '+answer'];
+        $rawResult = $this->processRunner->execute($command);
+        if ($rawResult['success'] && !str_contains($rawResult['output'], 'SERVFAIL')) {
             $rawResult['records'] = $this->parseTxtRecord($rawResult['output']);
+        } else {
+            $rawResult['success'] = false;
         }
         return $rawResult;
     }
-    
+
     public function ptrQuery(string $ip): array
     {
-        $rawResult = $this->run(['dig', '-x', $ip, '+noall', '+answer']);
-        if ($rawResult['success']) {
-            $rawResult['records'] = $this->parsePtrOutput($rawResult['output']);
+        $command = ['dig', '-x', $ip, '+noall', '+answer'];
+        $rawResult = $this->processRunner->execute($command);
+        if ($rawResult['success'] && !str_contains($rawResult['output'], 'SERVFAIL')) {
+            $rawResult['records'] = $this->parseSimpleRecord($rawResult['output'], 'target');
+        } else {
+            $rawResult['success'] = false;
         }
         return $rawResult;
     }
