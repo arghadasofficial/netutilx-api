@@ -26,4 +26,16 @@ class DnsTypeService
 
         return $typesArray;
     }
+
+    public function getTypeById($typeId)
+    {
+        $query = "SELECT name FROM " . $this->table_name . " WHERE id = ? LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param('i', $typeId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $record = $result->fetch_assoc();
+        $stmt->close();
+        return $record;
+    }
 }

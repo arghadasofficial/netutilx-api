@@ -26,4 +26,15 @@ class DnsServerService
 
         return $serversArray;
     }
+
+    public function getServerById($serverId){
+        $query = "SELECT ip_address FROM " . $this->table_name . " WHERE id = ? LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param('i', $serverId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $record = $result->fetch_assoc();
+        $stmt->close();
+        return $record;
+    }
 }
