@@ -12,13 +12,10 @@ class DnsExecutor
     {
         try {
             $process = new Process($command);
-            // Set the timeout directly on the process object for clarity
             $process->setTimeout(2);
             $process->run();
 
             if (!$process->isSuccessful()) {
-                // This will now be caught by our specific exception handling below
-                // but we keep it as a fallback.
                 return [
                     'success' => false,
                     'query'   => implode(' ', $command),
@@ -27,8 +24,6 @@ class DnsExecutor
             }
 
             $output = trim($process->getOutput());
-
-            // This success check is good. It handles empty responses and server failures.
             $isSuccess = !empty($output) && !str_contains($output, 'SERVFAIL');
 
             return [
@@ -37,14 +32,12 @@ class DnsExecutor
                 'output'  => $isSuccess ? $output : ($output ?: 'No response received.')
             ];
         } catch (ProcessTimedOutException $e) {
-            // Specifically catch a timeout exception
             return [
                 'success' => false,
                 'query'   => implode(' ', $command),
                 'output'  => 'Error: The command timed out after 2 seconds.'
             ];
         } catch (\Throwable $e) {
-            // Catch any other general exception
             return [
                 'success' => false,
                 'query'   => implode(' ', $command),
@@ -53,66 +46,154 @@ class DnsExecutor
         }
     }
 
+    // --- Private Parsing Helpers ---
+
+    private function parseSimpleRecord(string $rawOutput, string $dataKey = 'target'): array
+    {
+        $records = [];
+        $lines = explode("\n", trim($rawOutput));
+        foreach ($lines as $line) {
+            if (empty(trim($line))) continue;
+            $parts = preg_split('/\s+/', trim($line));
+            if (count($parts) === 5) {
+                $records[] = [
+                    'name'    => $parts[0],
+                    'ttl'     => (int)$parts[1],
+                    'class'   => $parts[2],
+                    'type'    => $parts[3],
+                    $dataKey  => $parts[4]
+                ];
+            }
+        }
+        return $records;
+    }
+
+    private function parseMxRecord(string $rawOutput): array
+    {
+        $records = [];
+        $lines = explode("\n", trim($rawOutput));
+        foreach ($lines as $line) {
+            if (empty(trim($line))) continue;
+            $parts = preg_split('/\s+/', trim($line));
+            if (count($parts) === 6) {
+                $records[] = [
+                    'name'     => $parts[0],
+                    'ttl'      => (int)$parts[1],
+                    'class'    => $parts[2],
+                    'type'     => $parts[3],
+                    'priority' => (int)$parts[4],
+                    'target'   => $parts[5]
+                ];
+            }
+        }
+        return $records;
+    }
+    
+    private function parseSoaRecord(string $rawOutput): array
+    {
+        $records = [];
+        $lines = explode("\n", trim($rawOutput));
+        foreach ($lines as $line) {
+            if (empty(trim($line))) continue;
+            $parts = preg_split('/\s+/', trim($line));
+            if (count($parts) >= 11) {
+                $records[] = [
+                    'name'    => $parts[0],
+                    'ttl'     => (int)$parts[1],
+                    'class'   => $parts[2],
+                    'type'    => $parts[3],
+                    'mname'   => $parts[4],
+                    'rname'   => $parts[5],
+                    'serial'  => $parts[6],
+                    'refresh' => (int)$parts[7],
+                    'retry'   => (int)$parts[8],
+                    'expire'  => (int)$parts[9],
+                    'minimum' => (int)$parts[10]
+                ];
+            }
+        }
+        return $records;
+    }
+    
+    private function parseTxtRecord(string $rawOutput): array
+    {
+        $records = [];
+        $lines = explode("\n", trim($rawOutput));
+        foreach ($lines as $line) {
+            if (empty(trim($line))) continue;
+            preg_match('/^(\S+)\s+(\d+)\s+(\S+)\s+(\S+)\s+(.*)$/', $line, $matches);
+            if (count($matches) === 6) {
+                $records[] = [
+                    'name'    => $matches[1],
+                    'ttl'     => (int)$matches[2],
+                    'class'   => $matches[3],
+                    'type'    => $matches[4],
+                    'content' => trim($matches[5], '"')
+                ];
+            }
+        }
+        return $records;
+    }
+    
+    // The parsePtrOutput is just an alias for the simple parser
+    private function parsePtrOutput(string $rawOutput): array
+    {
+        return $this->parseSimpleRecord($rawOutput, 'target');
+    }
+
+    // --- Public Query Methods (All now use their respective parsers) ---
+
     public function aQuery(string $domain, string $server): array
     {
-        // FIX 2: Changed from 'self::run' to '$this->run'
-        return $this->run(['dig', "@$server", 'A', $domain, '+noall', '+answer']);
+        $rawResult = $this->run(['dig', "@$server", 'A', $domain, '+noall', '+answer']);
+        if ($rawResult['success']) {
+            $rawResult['records'] = $this->parseSimpleRecord($rawResult['output'], 'address');
+        }
+        return $rawResult;
     }
 
     public function nsQuery(string $domain, string $server): array
     {
-        return $this->run(['dig', "@$server", 'NS', $domain, '+noall', '+answer']);
+        $rawResult = $this->run(['dig', "@$server", 'NS', $domain, '+noall', '+answer']);
+        if ($rawResult['success']) {
+            $rawResult['records'] = $this->parseSimpleRecord($rawResult['output'], 'target');
+        }
+        return $rawResult;
     }
 
     public function mxQuery(string $domain, string $server): array
     {
-        return $this->run(['dig', "@$server", 'MX', $domain, '+noall', '+answer']);
+        $rawResult = $this->run(['dig', "@$server", 'MX', $domain, '+noall', '+answer']);
+        if ($rawResult['success']) {
+            $rawResult['records'] = $this->parseMxRecord($rawResult['output']);
+        }
+        return $rawResult;
     }
 
     public function soaQuery(string $domain, string $server): array
     {
-        return $this->run(['dig', "@$server", 'SOA', $domain, '+noall', '+answer']);
+        $rawResult = $this->run(['dig', "@$server", 'SOA', $domain, '+noall', '+answer']);
+        if ($rawResult['success']) {
+            $rawResult['records'] = $this->parseSoaRecord($rawResult['output']);
+        }
+        return $rawResult;
     }
 
     public function txtQuery(string $domain, string $server): array
     {
-        return $this->run(['dig', "@$server", 'TXT', $domain, '+noall', '+answer']);
+        $rawResult = $this->run(['dig', "@$server", 'TXT', $domain, '+noall', '+answer']);
+        if ($rawResult['success']) {
+            $rawResult['records'] = $this->parseTxtRecord($rawResult['output']);
+        }
+        return $rawResult;
     }
-
+    
     public function ptrQuery(string $ip): array
     {
         $rawResult = $this->run(['dig', '-x', $ip, '+noall', '+answer']);
-
-        // If the raw query was successful, parse the output and add it to the result.
         if ($rawResult['success']) {
             $rawResult['records'] = $this->parsePtrOutput($rawResult['output']);
         }
-
         return $rawResult;
-    }
-
-
-    private function parsePtrOutput(string $rawOutput): array
-    {
-        $parsedRecords = [];
-        $lines = explode("\n", trim($rawOutput));
-
-        foreach ($lines as $line) {
-            if (empty(trim($line))) continue;
-
-            $cleanedLine = preg_replace('/\s+/', ' ', trim($line));
-            $parts = explode(' ', $cleanedLine);
-
-            if (count($parts) === 5) {
-                $parsedRecords[] = [
-                    'name'   => $parts[0],
-                    'ttl'    => (int)$parts[1],
-                    'class'  => $parts[2],
-                    'type'   => $parts[3],
-                    'target' => $parts[4]
-                ];
-            }
-        }
-        return $parsedRecords;
     }
 }
