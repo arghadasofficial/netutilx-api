@@ -31,7 +31,7 @@ if (!$query || $serverId === null || $typeId === null) {
 $result = $dnsInfoService->queryDnsInfo($query, $serverId, $typeId);
 
 if ($result['success']) {
-    ResponseHelper::success($result['records'], 'Dns Info Fetched Successfully');
+    ResponseHelper::success($result, 'Dns Info Fetched Successfully');
 } else {
     ResponseHelper::error(
         $result['output'],
