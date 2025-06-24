@@ -2,6 +2,7 @@
 
 namespace Core;
 
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
 
 class DnsExecutor
@@ -10,25 +11,40 @@ class DnsExecutor
     private function run(array $command): array
     {
         try {
-            $process = new Process(array_merge(['timeout', '2'], $command));
+            $process = new Process($command);
+            // Set the timeout directly on the process object for clarity
+            $process->setTimeout(2);
             $process->run();
 
             if (!$process->isSuccessful()) {
+                // This will now be caught by our specific exception handling below
+                // but we keep it as a fallback.
                 return [
                     'success' => false,
                     'query'   => implode(' ', $command),
-                    'output'  => $process->getErrorOutput() ?: 'Command failed or timed out.'
+                    'output'  => $process->getErrorOutput() ?: 'Command failed with no error output.'
                 ];
             }
 
             $output = trim($process->getOutput());
 
+            // This success check is good. It handles empty responses and server failures.
+            $isSuccess = !empty($output) && !str_contains($output, 'SERVFAIL');
+
             return [
-                'success' => !empty($output) && !str_contains($output, 'SERVFAIL'),
+                'success' => $isSuccess,
                 'query'   => implode(' ', $command),
-                'output'  => $output ?: 'No response received.'
+                'output'  => $isSuccess ? $output : ($output ?: 'No response received.')
+            ];
+        } catch (ProcessTimedOutException $e) {
+            // Specifically catch a timeout exception
+            return [
+                'success' => false,
+                'query'   => implode(' ', $command),
+                'output'  => 'Error: The command timed out after 2 seconds.'
             ];
         } catch (\Throwable $e) {
+            // Catch any other general exception
             return [
                 'success' => false,
                 'query'   => implode(' ', $command),
@@ -62,11 +78,11 @@ class DnsExecutor
     {
         return $this->run(['dig', "@$server", 'TXT', $domain, '+noall', '+answer']);
     }
-    
+
     public function ptrQuery(string $ip): array
     {
         $rawResult = $this->run(['dig', '-x', $ip, '+noall', '+answer']);
-        
+
         // If the raw query was successful, parse the output and add it to the result.
         if ($rawResult['success']) {
             $rawResult['records'] = $this->parsePtrOutput($rawResult['output']);
