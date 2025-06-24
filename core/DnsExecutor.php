@@ -11,9 +11,6 @@ class DnsExecutor
         $this->processRunner = $processRunner;
     }
 
-    /**
-     * The single, unified parser that handles all record types.
-     */
     private function parseOutput(string $rawOutput): array
     {
         $records = [];
