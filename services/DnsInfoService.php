@@ -46,6 +46,8 @@ class DnsInfoService
                 return $this->dnsExecutor->soaQuery($query, $server['ip_address']);
             case 'TXT':
                 return $this->dnsExecutor->txtQuery($query, $server['ip_address']);
+            case 'PTR':
+                return ['success' => false, 'output' => "Error: The query type PTR is not supported for direct queries. Please use an IP address."];
             default:
                 return ['success' => false, 'output' => "Error: The query type '{$type_name}' is not supported."];
         }
