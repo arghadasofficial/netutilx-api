@@ -1,15 +1,18 @@
 <?php
+
 namespace Core;
 
 use Symfony\Component\Process\Process;
-use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class DnsExecutor
 {
-    private static function run(array $command): array
+    /**
+     * The private run method is the engine for all queries.
+     * It executes the command and returns a raw result array.
+     */
+    private function run(array $command): array
     {
         try {
-            // Prepend timeout to avoid hanging
             $process = new Process(array_merge(['timeout', '2'], $command));
             $process->run();
 
@@ -28,7 +31,6 @@ class DnsExecutor
                 'query'   => implode(' ', $command),
                 'output'  => $output ?: 'No response received.'
             ];
-
         } catch (\Throwable $e) {
             return [
                 'success' => false,
@@ -38,33 +40,71 @@ class DnsExecutor
         }
     }
 
-    public static function aQuery(string $domain, string $server): array
+    /**
+     * All public query methods are now non-static.
+     * They call the internal run method using $this->run().
+     */
+    public function aQuery(string $domain, string $server): array
     {
-        return self::run(['dig', "@$server", 'A', $domain, '+noall', '+answer']);
+        return $this->run(['dig', "@$server", 'A', $domain, '+noall', '+answer']);
     }
 
-    public static function nsQuery(string $domain, string $server): array
+    public function nsQuery(string $domain, string $server): array
     {
-        return self::run(['dig', "@$server", 'NS', $domain, '+noall', '+answer']);
+        return $this->run(['dig', "@$server", 'NS', $domain, '+noall', '+answer']);
     }
 
-    public static function mxQuery(string $domain, string $server): array
+    public function mxQuery(string $domain, string $server): array
     {
-        return self::run(['dig', "@$server", 'MX', $domain, '+noall', '+answer']);
+        return $this->run(['dig', "@$server", 'MX', $domain, '+noall', '+answer']);
     }
 
-    public static function soaQuery(string $domain, string $server): array
+    public function soaQuery(string $domain, string $server): array
     {
-        return self::run(['dig', "@$server", 'SOA', $domain, '+noall', '+answer']);
+        return $this->run(['dig', "@$server", 'SOA', $domain, '+noall', '+answer']);
     }
 
-    public static function txtQuery(string $domain, string $server): array
+    public function txtQuery(string $domain, string $server): array
     {
-        return self::run(['dig', "@$server", 'TXT', $domain, '+noall', '+answer']);
+        return $this->run(['dig', "@$server", 'TXT', $domain, '+noall', '+answer']);
+    }
+    
+    /**
+     * The ptrQuery method is now complete. It calls the parser on success.
+     */
+    public function ptrQuery(string $ip): array
+    {
+        $rawResult = $this->run(['dig', '-x', $ip, '+noall', '+answer']);
+        
+        // If the raw query was successful, parse the output and add it to the result.
+        if ($rawResult['success']) {
+            $rawResult['records'] = $this->parsePtrOutput($rawResult['output']);
+        }
+
+        return $rawResult;
     }
 
-    public static function ptrQuery(string $ip): array
+    private function parsePtrOutput(string $rawOutput): array
     {
-        return self::run(['dig', '-x', $ip, '+noall', '+answer']);
+        $parsedRecords = [];
+        $lines = explode("\n", trim($rawOutput));
+
+        foreach ($lines as $line) {
+            if (empty(trim($line))) continue;
+
+            $cleanedLine = preg_replace('/\s+/', ' ', trim($line));
+            $parts = explode(' ', $cleanedLine);
+
+            if (count($parts) === 5) {
+                $parsedRecords[] = [
+                    'name'   => $parts[0],
+                    'ttl'    => (int)$parts[1],
+                    'class'  => $parts[2],
+                    'type'   => $parts[3],
+                    'target' => $parts[4]
+                ];
+            }
+        }
+        return $parsedRecords;
     }
 }

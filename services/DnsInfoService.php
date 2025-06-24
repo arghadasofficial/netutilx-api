@@ -10,10 +10,6 @@ class DnsInfoService
     private DnsTypeService $dnsTypeService;
     private DnsExecutor $dnsExecutor;
 
-    /**
-     * The constructor is now simpler. It no longer needs the database connection
-     * as this class is not directly interacting with the database anymore.
-     */
     public function __construct(DnsServerService $dnsServerService, DnsTypeService $dnsTypeService, DnsExecutor $dnsExecutor)
     {
         $this->dnsServerService = $dnsServerService;
@@ -21,9 +17,6 @@ class DnsInfoService
         $this->dnsExecutor = $dnsExecutor;
     }
 
-    /**
-     * Performs a live DNS query without saving the result.
-     */
     public function queryDnsInfo(string $query, int $serverId, int $typeId): array
     {
         $server = $this->dnsServerService->getServerById($serverId);
@@ -42,7 +35,6 @@ class DnsInfoService
 
         $type_name = $type['name'];
 
-        // 4. Use the type name to call the correct executor method
         switch ($type_name) {
             case 'A':
                 return $this->dnsExecutor->aQuery($query, $server['ip_address']);
@@ -59,9 +51,6 @@ class DnsInfoService
         }
     }
 
-    /**
-     * Checks if a string is a valid IP address.
-     */
     public function isIpAddress(string $query): bool
     {
         return filter_var($query, FILTER_VALIDATE_IP) !== false;
