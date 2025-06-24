@@ -14,7 +14,7 @@ class DnsServerService
 
     public function getAllDnsServers()
     {
-        $query = "SELECT id, name, ip_address FROM " . $this->table_name . " ORDER BY name ASC";
+        $query = "SELECT * FROM " . $this->table_name . " ORDER BY name ASC";
         // Execute the query
         $result = $this->conn->query($query);
 
