@@ -6,10 +6,7 @@ use Symfony\Component\Process\Process;
 
 class DnsExecutor
 {
-    /**
-     * The private run method is the engine for all queries.
-     * It executes the command and returns a raw result array.
-     */
+
     private function run(array $command): array
     {
         try {
@@ -40,12 +37,9 @@ class DnsExecutor
         }
     }
 
-    /**
-     * All public query methods are now non-static.
-     * They call the internal run method using $this->run().
-     */
     public function aQuery(string $domain, string $server): array
     {
+        // FIX 2: Changed from 'self::run' to '$this->run'
         return $this->run(['dig', "@$server", 'A', $domain, '+noall', '+answer']);
     }
 
@@ -69,12 +63,9 @@ class DnsExecutor
         return $this->run(['dig', "@$server", 'TXT', $domain, '+noall', '+answer']);
     }
     
-    /**
-     * The ptrQuery method is now complete. It calls the parser on success.
-     */
     public function ptrQuery(string $ip): array
     {
-        $rawResult = $this->run(['dig', '-x', $ip, '+noall', '+answer']);
+        $rawResult = $this->run(['digg', '-x', $ip, '+noall', '+answer']);
         
         // If the raw query was successful, parse the output and add it to the result.
         if ($rawResult['success']) {
@@ -83,6 +74,7 @@ class DnsExecutor
 
         return $rawResult;
     }
+
 
     private function parsePtrOutput(string $rawOutput): array
     {
