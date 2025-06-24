@@ -65,7 +65,7 @@ class DnsExecutor
     
     public function ptrQuery(string $ip): array
     {
-        $rawResult = $this->run(['digg', '-x', $ip, '+noall', '+answer']);
+        $rawResult = $this->run(['dig', '-x', $ip, '+noall', '+answer']);
         
         // If the raw query was successful, parse the output and add it to the result.
         if ($rawResult['success']) {
