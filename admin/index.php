@@ -8,7 +8,7 @@ $db = $database->connect();
 
 $query = "SELECT * FROM " . $this->table_name . " ORDER BY name ASC";
 
-$result = $this->conn->query($query);
+$result = $db->query($query);
 
 $typesArray = $result->fetch_all(MYSQLI_ASSOC);
 
