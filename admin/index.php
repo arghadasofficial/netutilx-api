@@ -13,7 +13,7 @@ use Config\Database;
 $database = new Database();
 $db = $database->connect();
 
-$query = "SELECT * FROM " . $this->table_name . " ORDER BY name ASC";
+$query = "SELECT * FROM " . 'dns_servers' . " ORDER BY name ASC";
 
 $result = $db->query($query);
 
