@@ -25,6 +25,10 @@ class DnsServerService
         return $serversArray;
     }
 
+    public function addDnsServer($name, $ipAddress) {
+        
+    }
+
     public function getServerById($serverId){
         $query = "SELECT ip_address FROM " . $this->table_name . " WHERE id = ? LIMIT 1";
         $stmt = $this->conn->prepare($query);

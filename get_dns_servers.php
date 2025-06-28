@@ -1,9 +1,9 @@
 <?php
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '../vendor/autoload.php';
 
-use Services\DnsServerService;
 use Utils\ResponseHelper;
 use Config\Database;
+use Services\DnsServerService;
 
 $database = new Database();
 $dbConnection = $database->connect();
