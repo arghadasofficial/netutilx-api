@@ -1,6 +1,11 @@
 <?php
 require_once __DIR__ . '../vendor/autoload.php';
 
+// Add these lines at the very top of your script
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 use Utils\ResponseHelper;
 use Config\Database;
 use Services\DnsServerService;
